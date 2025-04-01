@@ -1,0 +1,6 @@
+@MuseumService_HostAddress = http://localhost:5063
+
+GET {{MuseumService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
