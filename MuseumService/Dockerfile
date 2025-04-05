@@ -1,5 +1,4 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
@@ -19,5 +18,12 @@ RUN dotnet publish "MuseumService.csproj" -c $BUILD_CONFIGURATION -o /app/publis
 
 FROM base AS final
 WORKDIR /app
+
+# Установка PostgreSQL клиента для проверки доступности базы данных
+RUN apt-get update && apt-get install -y postgresql-client
+
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "MuseumService.dll"]
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

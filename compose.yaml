@@ -1,0 +1,47 @@
+﻿version: '3.8'
+
+services:
+  museumapp:
+    build:
+      context: .
+      dockerfile: MuseumService/Dockerfile
+    ports:
+      - "5063:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=museum;Username=postgres;Password=postgres123;
+      - Jwt__Key=this-is-a-very-long-and-secure-key-with-at-least-32-characters
+      - Jwt__Issuer=MuseumService
+      - Jwt__Audience=MuseumClient
+      - Jwt__ExpiryInMinutes=60
+    networks:
+      - museum-network
+
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+      - POSTGRES_DB=museum
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - museum-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  museum-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
