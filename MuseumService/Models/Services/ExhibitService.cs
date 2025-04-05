@@ -41,7 +41,17 @@ public class ExhibitService
             .Include(e => e.Images)
             .Select(e => new ExhibitDto
             {
-                // аналогично GetAllExhibits
+                ExhibitId = e.ExhibitId,
+                Title = e.Title,
+                Description = e.Description,
+                AddedAt = e.AddedAt,
+                UpdatedAt = e.UpdatedAt,
+                Images = e.Images.Select(i => new ExhibitImageDto
+                {
+                    ImagePath = i.ImagePath,
+                    AltText = i.AltText,
+                    DisplayOrder = i.DisplayOrder
+                }).ToList()
             })
             .FirstOrDefaultAsync();
     }

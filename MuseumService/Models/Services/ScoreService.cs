@@ -37,7 +37,12 @@ public class ScoreService
             .OrderByDescending(s => s.ScoreValue)
             .Select(s => new ScoreDto
             {
-                // аналогично GetAllScores
+                ScoreId = s.ScoreId,
+                GameId = s.GameId,
+                GameName = s.Game.GameName,
+                PlayerName = s.PlayerName,
+                ScoreValue = s.ScoreValue,
+                PlayedAt = s.PlayedAt
             })
             .ToListAsync();
     }
@@ -60,7 +65,12 @@ public class ScoreService
             .Include(s => s.Game)
             .Select(s => new ScoreDto
             {
-                // аналогично GetAllScores
+                ScoreId = s.ScoreId,
+                GameId = s.GameId,
+                GameName = s.Game.GameName,
+                PlayerName = s.PlayerName,
+                ScoreValue = s.ScoreValue,
+                PlayedAt = s.PlayedAt
             })
             .FirstAsync();
     }

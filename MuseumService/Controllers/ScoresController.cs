@@ -1,7 +1,10 @@
-﻿namespace MuseumService.Models.Services;
+﻿using Microsoft.AspNetCore.Mvc;
+using MuseumService.Models;
+using MuseumService.Models.Services;
+
+namespace MuseumService.Controllers;
 
 // ScoresController.cs
-using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("api/[controller]")]
