@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MuseumService.Models;
 using MuseumService.Models.Services;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Добавьте после AddDbContext
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ExhibitService>();
+builder.Services.AddScoped<ScoreService>();
+
+
 
 // Настройка аутентификации JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

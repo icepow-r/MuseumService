@@ -1,17 +1,19 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MuseumService.Models.Services;
-
-// AuthService.cs
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
 
 public class AuthService
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
+    private const int Iterations = 100000; // Количество итераций PBKDF2
+    private const int SaltSize = 16; // 128 бит соли
+    private const int HashSize = 32; // 256 бит хеша
     
     public AuthService(AppDbContext context, IConfiguration configuration)
     {
@@ -36,11 +38,46 @@ public class AuthService
             Employee = employee
         };
     }
+
+    // Генерация хеша пароля (используется при регистрации/смене пароля)
+    public static string HashPassword(string password)
+    {
+        using var algorithm = new Rfc2898DeriveBytes(
+            password,
+            SaltSize,
+            Iterations,
+            HashAlgorithmName.SHA256);
+            
+        var salt = Convert.ToBase64String(algorithm.Salt);
+        var hash = Convert.ToBase64String(algorithm.GetBytes(HashSize));
+        
+        return $"{Iterations}.{salt}.{hash}";
+    }
     
     private bool VerifyPassword(string password, string storedHash)
     {
-        // В реальном проекте используйте безопасное сравнение хэшей
-        return BCrypt.Net.BCrypt.Verify(password, storedHash);
+        try
+        {
+            var parts = storedHash.Split('.', 3);
+            if (parts.Length != 3) return false;
+            
+            var iterations = int.Parse(parts[0]);
+            var salt = Convert.FromBase64String(parts[1]);
+            var expectedHash = Convert.FromBase64String(parts[2]);
+            
+            using var algorithm = new Rfc2898DeriveBytes(
+                password,
+                salt,
+                iterations,
+                HashAlgorithmName.SHA256);
+                
+            var actualHash = algorithm.GetBytes(HashSize);
+            return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);
+        }
+        catch
+        {
+            return false;
+        }
     }
     
     private string GenerateJwtToken(Employee employee)
