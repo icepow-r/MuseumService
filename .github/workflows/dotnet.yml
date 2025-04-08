@@ -31,7 +31,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: Publish
-      run: dotnet publish -c Release -r ${{ matrix.runtime }} true -o ./publish-${{ matrix.runtime }}
+      run: dotnet publish -c Release -r ${{ matrix.runtime }} -o ./publish-${{ matrix.runtime }}
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -39,7 +39,7 @@ jobs:
          path: ./publish-${{ matrix.runtime }}/
          
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
-        name: windows-app
-        path: ./publish/
+        name: app-${{ matrix.runtime }}
+        path: ./publish-${{ matrix.runtime }}/
