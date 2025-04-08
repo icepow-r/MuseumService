@@ -1,4 +1,6 @@
-﻿namespace MuseumService.Models;
+﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+namespace MuseumService.Models;
 
 // AppDbContext.cs
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +29,20 @@ public class AppDbContext : DbContext
             .HasForeignKey(ei => ei.ExhibitId)
             .OnDelete(DeleteBehavior.Cascade); // Каскадное удаление
 
-        // Другие конфигурации...
+        var utcConverter = new ValueConverter<DateTime, DateTime>(
+            v => v.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v, DateTimeKind.Utc),
+            v => v
+        );
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(utcConverter);
+                }
+            }
+        }
     }
 }
