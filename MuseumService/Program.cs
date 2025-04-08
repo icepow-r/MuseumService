@@ -2,9 +2,9 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using MuseumService;
 using MuseumService.Models;
 using MuseumService.Models.Services;
-using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,12 +12,25 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Добавьте после AddDbContext
+// Добавление сервисов
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ExhibitService>();
 builder.Services.AddScoped<ScoreService>();
 
+// Настройка CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
 
+// Добавление healthchecks
+builder.Services.AddHealthChecks();
 
 // Настройка аутентификации JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -32,12 +45,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not set")))
         };
     });
 
-// Добавление аутентификации (будет настроено позже)
-builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
@@ -53,8 +64,33 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Настройка маршрутов health check
+app.MapHealthChecks("/health");
 app.MapControllers();
+
+// Применение миграций и инициализация данных при запуске
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Инициализация базы данных...");
+        
+        // Запуск DbInitializer
+        await DbInitializer.Initialize(services);
+        
+        logger.LogInformation("Инициализация базы данных успешно завершена.");
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ошибка при инициализации базы данных.");
+    }
+}
 
 app.Run();
