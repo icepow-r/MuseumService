@@ -32,6 +32,7 @@ public class ExhibitsController : ControllerBase
     /// </summary>
     /// <returns>Список экспонатов</returns>
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(IEnumerable<Exhibit>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll()
     {
@@ -45,6 +46,7 @@ public class ExhibitsController : ControllerBase
     /// <param name="id">Идентификатор экспоната</param>
     /// <returns>Экспонат</returns>
     [HttpGet("{id}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(Exhibit), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(int id)
@@ -186,6 +188,7 @@ public class ExhibitsController : ControllerBase
     /// <param name="id">Идентификатор изображения</param>
     /// <returns>Файл изображения</returns>
     [HttpGet("images/{id}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetImage(int id)
