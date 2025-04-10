@@ -6,54 +6,104 @@ namespace MuseumService.Models.Services;
 public class ExhibitService
 {
     private readonly AppDbContext _context;
+    private readonly IWebHostEnvironment _environment;
     
-    public ExhibitService(AppDbContext context)
+    public ExhibitService(AppDbContext context, IWebHostEnvironment environment)
     {
         _context = context;
+        _environment = environment;
     }
     
     public async Task<List<ExhibitDto>> GetAllExhibits()
     {
-        return await _context.Exhibits
+        var exhibits = await _context.Exhibits
             .Include(e => e.Images)
             .OrderBy(e => e.Title)
-            .Select(e => new ExhibitDto
-            {
-                ExhibitId = e.ExhibitId,
-                Title = e.Title,
-                Description = e.Description,
-                AddedAt = e.AddedAt,
-                UpdatedAt = e.UpdatedAt,
-                Images = e.Images.Select(i => new ExhibitImageDto
-                {
-                    ImagePath = i.ImagePath,
-                    AltText = i.AltText,
-                    DisplayOrder = i.DisplayOrder
-                }).ToList()
-            })
             .ToListAsync();
+
+        var result = new List<ExhibitDto>();
+
+        foreach (var exhibit in exhibits)
+        {
+            var exhibitDto = new ExhibitDto
+            {
+                ExhibitId = exhibit.ExhibitId,
+                Title = exhibit.Title,
+                Description = exhibit.Description,
+                AddedAt = exhibit.AddedAt,
+                UpdatedAt = exhibit.UpdatedAt,
+                Images = new List<ExhibitImageDto>()
+            };
+            
+            foreach (var image in exhibit.Images)
+            {
+                var imagePath = image.ImagePath.TrimStart('/');
+                var fullPath = Path.Combine(_environment.WebRootPath, imagePath);
+                byte[] imageBytes = Array.Empty<byte>();
+                
+                if (File.Exists(fullPath))
+                {
+                    imageBytes = await File.ReadAllBytesAsync(fullPath);
+                }
+
+                exhibitDto.Images.Add(new ExhibitImageDto
+                {
+                    ImagePath = image.ImagePath,
+                    AltText = image.AltText,
+                    DisplayOrder = image.DisplayOrder,
+                    ImageExt = Path.GetExtension(image.ImagePath).TrimStart('.'),
+                    ByteArray = imageBytes
+                });
+            }
+
+            result.Add(exhibitDto);
+        }
+
+        return result;
     }
     
     public async Task<ExhibitDto?> GetExhibitById(int id)
     {
-        return await _context.Exhibits
+        var exhibit = await _context.Exhibits
             .Where(e => e.ExhibitId == id)
             .Include(e => e.Images)
-            .Select(e => new ExhibitDto
-            {
-                ExhibitId = e.ExhibitId,
-                Title = e.Title,
-                Description = e.Description,
-                AddedAt = e.AddedAt,
-                UpdatedAt = e.UpdatedAt,
-                Images = e.Images.Select(i => new ExhibitImageDto
-                {
-                    ImagePath = i.ImagePath,
-                    AltText = i.AltText,
-                    DisplayOrder = i.DisplayOrder
-                }).ToList()
-            })
             .FirstOrDefaultAsync();
+
+        if (exhibit == null)
+            return null;
+
+        var result = new ExhibitDto
+        {
+            ExhibitId = exhibit.ExhibitId,
+            Title = exhibit.Title,
+            Description = exhibit.Description,
+            AddedAt = exhibit.AddedAt,
+            UpdatedAt = exhibit.UpdatedAt,
+            Images = new List<ExhibitImageDto>()
+        };
+
+        foreach (var image in exhibit.Images)
+        {
+            var imagePath = image.ImagePath.TrimStart('/');
+            var fullPath = Path.Combine(_environment.WebRootPath, imagePath);
+            byte[] imageBytes = [];
+            
+            if (File.Exists(fullPath))
+            {
+                imageBytes = await File.ReadAllBytesAsync(fullPath);
+            }
+
+            result.Images.Add(new ExhibitImageDto
+            {
+                ImagePath = image.ImagePath,
+                AltText = image.AltText,
+                DisplayOrder = image.DisplayOrder,
+                ImageExt = Path.GetExtension(image.ImagePath).TrimStart('.'),
+                ByteArray = imageBytes
+            });
+        }
+
+        return result;
     }
     
     public async Task<ExhibitDto> CreateExhibit(CreateExhibitDto dto, int employeeId)
@@ -64,16 +114,44 @@ public class ExhibitService
             Description = dto.Description,
             EmployeeId = employeeId,
             AddedAt = DateTime.UtcNow,
-            Images = dto.Images.Select((img, index) => new ExhibitImage
-            {
-                ImagePath = img.ImagePath,
-                AltText = img.AltText,
-                DisplayOrder = img.DisplayOrder
-            }).ToList()
+            Images = new List<ExhibitImage>()
         };
         
         _context.Exhibits.Add(exhibit);
         await _context.SaveChangesAsync();
+        
+        if (dto.Images != null && dto.Images.Count > 0)
+        {
+            var imageDirectory = Path.Combine(_environment.WebRootPath, "images");
+            
+             if (!Directory.Exists(imageDirectory))
+            {
+                Directory.CreateDirectory(imageDirectory);
+            }
+            
+            foreach (var imageDto in dto.Images)
+            {
+                if (imageDto.ByteArray != null && imageDto.ByteArray.Length > 0)
+                {
+                     var fileName = $"{Guid.NewGuid()}.{imageDto.ImageExt}";
+                    var filePath = Path.Combine(imageDirectory, fileName);
+                    
+                    await File.WriteAllBytesAsync(filePath, imageDto.ByteArray);
+                    
+                    var exhibitImage = new ExhibitImage
+                    {
+                        ExhibitId = exhibit.ExhibitId,
+                        ImagePath = $"/images/{fileName}",
+                        AltText = string.IsNullOrEmpty(imageDto.AltText) ? exhibit.Title : imageDto.AltText,
+                        DisplayOrder = dto.LoadOrder
+                    };
+                    
+                    _context.ExhibitImages.Add(exhibitImage);
+                }
+            }
+            
+            await _context.SaveChangesAsync();
+        }
         
         return await GetExhibitById(exhibit.ExhibitId);
     }

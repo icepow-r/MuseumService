@@ -109,6 +109,7 @@ app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseStaticFiles();
 
 // Настройка маршрутов health check
 app.MapHealthChecks("/health");

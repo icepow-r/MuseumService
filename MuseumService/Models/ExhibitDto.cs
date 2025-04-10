@@ -22,6 +22,9 @@ public class CreateExhibitDto
     [Required(ErrorMessage = "Описание экспоната обязательно")]
     public string Description { get; set; }
     
+    [Range(0, int.MaxValue, ErrorMessage = "Порядок загрузки должен быть неотрицательным числом")]
+    public int LoadOrder { get; set; }
+    
     public List<ExhibitImageDto> Images { get; set; } = new();
 }
 
@@ -36,6 +39,11 @@ public class ExhibitImageDto
     
     [Range(0, int.MaxValue, ErrorMessage = "Порядок отображения должен быть неотрицательным числом")]
     public int DisplayOrder { get; set; }
+    
+    public byte[] ByteArray { get; set; }
+    
+    [StringLength(10, ErrorMessage = "Расширение не может быть длиннее 10 символов")]
+    public string ImageExt { get; set; }
 }
 
 public class UpdateExhibitDto
