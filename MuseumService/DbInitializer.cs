@@ -16,7 +16,6 @@ public static class DbInitializer
 
         await InitializeEmployees(context);
         await InitializeGames(context);
-        await InitializeExhibits(context);
         await InitializeScores(context);
     }
 
@@ -78,69 +77,6 @@ public static class DbInitializer
                 }
             );
             
-            await context.SaveChangesAsync();
-        }
-    }
-
-    private static async Task InitializeExhibits(AppDbContext context)
-    {
-        // Проверяем наличие записей
-        if (!await context.Exhibits.AnyAsync())
-        {
-            // Получаем созданных сотрудников
-            var admin = await context.Employees.FirstOrDefaultAsync(e => e.Username == "admin");
-            var guide = await context.Employees.FirstOrDefaultAsync(e => e.Username == "guide");
-
-            if (admin == null || guide == null) 
-                return;
-
-            // Создаем экспонаты
-            var amphora = new Exhibit
-            {
-                EmployeeId = admin.EmployeeId,
-                Title = "Древняя амфора",
-                Description = "Древнегреческая амфора, датированная V веком до н.э.",
-                AddedAt = DateTime.Parse("2024-01-10 10:00:00"),
-                UpdatedAt = null
-            };
-
-            var portrait = new Exhibit
-            {
-                EmployeeId = guide.EmployeeId,
-                Title = "Портрет неизвестной",
-                Description = "Живопись XVIII века неизвестного художника",
-                AddedAt = DateTime.Parse("2024-01-15 14:30:00"),
-                UpdatedAt = null
-            };
-
-            context.Exhibits.AddRange(amphora, portrait);
-            await context.SaveChangesAsync();
-
-            // Добавляем изображения экспонатов
-            context.ExhibitImages.AddRange(
-                new ExhibitImage
-                {
-                    ExhibitId = amphora.ExhibitId,
-                    ImagePath = "/images/amphora_main.jpg",
-                    AltText = "Основное изображение амфоры",
-                    DisplayOrder = 1
-                },
-                new ExhibitImage
-                {
-                    ExhibitId = amphora.ExhibitId,
-                    ImagePath = "/images/amphora_detail.jpg",
-                    AltText = "Детальное изображение орнамента",
-                    DisplayOrder = 2
-                },
-                new ExhibitImage
-                {
-                    ExhibitId = portrait.ExhibitId,
-                    ImagePath = "/images/portrait_main.jpg",
-                    AltText = "Портрет неизвестной дамы",
-                    DisplayOrder = 1
-                }
-            );
-
             await context.SaveChangesAsync();
         }
     }

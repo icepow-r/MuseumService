@@ -9,6 +9,8 @@ public class Exhibit
     public Employee Employee { get; set; }
     public string Title { get; set; }
     public string Description { get; set; }
+    public string Collection { get; set; }
+    public string Era { get; set; }
     public DateTime AddedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     

@@ -30,6 +30,8 @@ public class ExhibitService
                 ExhibitId = exhibit.ExhibitId,
                 Title = exhibit.Title,
                 Description = exhibit.Description,
+                Collection = exhibit.Collection,
+                Era = exhibit.Era,
                 AddedAt = exhibit.AddedAt,
                 UpdatedAt = exhibit.UpdatedAt,
                 Images = new List<ExhibitImageDto>()
@@ -77,6 +79,8 @@ public class ExhibitService
             ExhibitId = exhibit.ExhibitId,
             Title = exhibit.Title,
             Description = exhibit.Description,
+            Collection = exhibit.Collection,
+            Era = exhibit.Era,
             AddedAt = exhibit.AddedAt,
             UpdatedAt = exhibit.UpdatedAt,
             Images = new List<ExhibitImageDto>()
@@ -112,6 +116,8 @@ public class ExhibitService
         {
             Title = dto.Title,
             Description = dto.Description,
+            Collection = dto.Collection,
+            Era = dto.Era,
             EmployeeId = employeeId,
             AddedAt = DateTime.UtcNow,
             Images = new List<ExhibitImage>()
@@ -167,6 +173,8 @@ public class ExhibitService
             
         exhibit.Title = dto.Title;
         exhibit.Description = dto.Description;
+        exhibit.Collection = dto.Collection;
+        exhibit.Era = dto.Era;
         exhibit.UpdatedAt = DateTime.UtcNow;
         
         await _context.SaveChangesAsync();

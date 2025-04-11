@@ -90,10 +90,18 @@ public class ExhibitsController : ControllerBase
             var description = requestData.GetProperty("desc").GetString();
             var loadOrder = requestData.GetProperty("loadOrder").GetInt32();
             
+            var collection = requestData.TryGetProperty("collection", out var collectionElement) ? 
+                             collectionElement.GetString() : null;
+            
+            var era = requestData.TryGetProperty("era", out var eraElement) ? 
+                      eraElement.GetString() : null;
+            
             var dto = new CreateExhibitDto
             {
                 Title = title,
                 Description = description,
+                Collection = collection,
+                Era = era,
                 LoadOrder = loadOrder,
                 Images = new List<ExhibitImageDto>()
             };

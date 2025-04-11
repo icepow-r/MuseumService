@@ -8,6 +8,8 @@ public class ExhibitDto
     public int ExhibitId { get; set; }
     public string Title { get; set; }
     public string Description { get; set; }
+    public string Collection { get; set; }
+    public string Era { get; set; }
     public DateTime AddedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public List<ExhibitImageDto> Images { get; set; } = new();
@@ -21,6 +23,12 @@ public class CreateExhibitDto
     
     [Required(ErrorMessage = "Описание экспоната обязательно")]
     public string Description { get; set; }
+    
+    [StringLength(100, ErrorMessage = "Коллекция не может быть длиннее 100 символов")]
+    public string Collection { get; set; }
+    
+    [StringLength(100, ErrorMessage = "Эпоха не может быть длиннее 100 символов")]
+    public string Era { get; set; }
     
     [Range(0, int.MaxValue, ErrorMessage = "Порядок загрузки должен быть неотрицательным числом")]
     public int LoadOrder { get; set; }
@@ -54,4 +62,10 @@ public class UpdateExhibitDto
     
     [Required(ErrorMessage = "Описание экспоната обязательно")]
     public string Description { get; set; }
+    
+    [StringLength(100, ErrorMessage = "Коллекция не может быть длиннее 100 символов")]
+    public string Collection { get; set; }
+    
+    [StringLength(100, ErrorMessage = "Эпоха не может быть длиннее 100 символов")]
+    public string Era { get; set; }
 }
